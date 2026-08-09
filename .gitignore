@@ -1,0 +1,10 @@
+/Gemfile.lock
+/.bundle/
+/pkg/
+/coverage/
+/.idea/
+/.vscode/
+*.swp
+.DS_Store
+.env
+.env.local
