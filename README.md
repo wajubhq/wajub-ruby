@@ -125,7 +125,7 @@ Test mode is selected by your API key prefix (`sk_test.…`), not by the API URL
 | Property | Methods |
 |----------|---------|
 | `client.global` | `ping`, `channels`, `countries`, `currencies` |
-| `client.payments` | `create`, `initialize_payment`, `retrieve`, `list`, `cancel`, `process`, `process_split`, `list_refunds` |
+| `client.payments` | `create`, `retrieve`, `list`, `cancel`, `process`, `process_split`, `list_refunds` |
 | `client.customers` | `create`, `retrieve`, `update`, `delete`, `list`, `block`, `unblock`, `activate`, `deactivate`, `list_tax_ids`, `create_tax_id`, `delete_tax_id` |
 | `client.refunds` | `create`, `retrieve`, `list` |
 | `client.transfers` | `create`, `retrieve`, `list` |

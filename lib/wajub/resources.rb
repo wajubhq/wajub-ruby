@@ -41,10 +41,6 @@ module Wajub
       to_payment_object(post('/payments', params, options))
     end
 
-    def initialize_payment(params, options = nil)
-      create(params, options)
-    end
-
     def retrieve(id)
       res = get("/payments/#{URI.encode_www_form_component(id)}")
       to_payment_object('transaction' => HttpUtils.pick_resource(res, 'transaction'))
