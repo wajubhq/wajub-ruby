@@ -155,7 +155,9 @@ module Wajub
     end
 
     def delete_tax_id(customer_id, tax_id, options = nil)
-      delete("/customers/#{URI.encode_www_form_component(customer_id)}/tax_ids/#{URI.encode_www_form_component(tax_id)}", options)
+      # Not `delete`: on a CrudResource that one takes an id and encodes it as a path segment.
+      path = "/customers/#{URI.encode_www_form_component(customer_id)}/tax_ids/#{URI.encode_www_form_component(tax_id)}"
+      request('DELETE', path, options: options)
     end
   end
 

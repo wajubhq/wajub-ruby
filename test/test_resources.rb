@@ -86,4 +86,26 @@ class TestResources < Minitest::Test
     refunds.delete('ref_new')
     assert_equal 'DELETE', mock.last_request[:method]
   end
+
+  # delete_tax_id went through CrudResource#delete, which takes an id: the whole
+  # path was encoded as one and the call hit DELETE /customers/%2Fcustomers%2F...
+  def test_customers_delete_tax_id_calls_the_nested_path
+    mock = Wajub::MockTransport.new([{ status: 200, body: {} }])
+    customers = Wajub::CustomersResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+
+    customers.delete_tax_id('cus_1', 'txi/2', Wajub::RequestOptions.new(idempotency_key: 'del-1'))
+
+    assert_equal 'DELETE', mock.last_request[:method]
+    assert_equal '/customers/cus_1/tax_ids/txi%2F2', mock.last_request[:path]
+    assert_equal 'del-1', mock.last_request[:headers]['Idempotency-Key']
+  end
+
+  def test_customers_delete_still_encodes_the_id
+    mock = Wajub::MockTransport.new([{ status: 200, body: {} }])
+    customers = Wajub::CustomersResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+
+    customers.delete('cus/1')
+
+    assert_equal '/customers/cus%2F1', mock.last_request[:path]
+  end
 end

@@ -16,9 +16,10 @@ Gem::Specification.new do |spec|
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/wajubhq/wajub-ruby'
+  spec.metadata['changelog_uri'] = 'https://github.com/wajubhq/wajub-ruby/blob/main/CHANGELOG.md'
 
   spec.files = Dir.chdir(__dir__) do
-    Dir['lib/**/*.rb', 'README.md', 'LICENSE']
+    Dir['lib/**/*.rb', 'README.md', 'CHANGELOG.md', 'LICENSE']
   end
   spec.require_paths = ['lib']
 end
