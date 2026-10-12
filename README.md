@@ -99,7 +99,7 @@ class WebhooksController < ApplicationController
       request.headers['X-Wajub-Timestamp']
     )
 
-    case event['type']
+    case event['event']
     when 'payment.succeeded'
       # fulfill order
     end
@@ -162,7 +162,7 @@ rescue Wajub::WebhookSignatureVerificationError
   halt 400
 end
 
-case event['type']
+case event['event']
 when 'payment.succeeded'
   # fulfill order
 end

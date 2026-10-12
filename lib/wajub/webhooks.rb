@@ -15,8 +15,13 @@ module Wajub
       @secret = secret.to_s
     end
 
+    # A missing signature or timestamp header (nil, as request.headers returns
+    # it) raises WebhookSignatureVerificationError, like a wrong one.
     def construct_event(payload, signature, timestamp, tolerance = DEFAULT_TOLERANCE)
       raise ArgumentError, 'Wajub: webhook_secret is required for construct_event' if @secret.empty?
+      if signature.to_s.empty? || timestamp.to_s.empty?
+        raise WebhookSignatureVerificationError, 'Missing X-Wajub-Signature or X-Wajub-Timestamp header.'
+      end
       raise WebhookSignatureVerificationError, 'Invalid webhook signature format. Expected v1={hash}.' unless signature.start_with?('v1=')
       raise ArgumentError, 'Wajub: payload must be the raw request body as a String, not a parsed object' unless payload.is_a?(String)
 
@@ -26,8 +31,8 @@ module Wajub
 
       raise WebhookSignatureVerificationError, 'Webhook signature verification failed.' unless Crypto.timing_safe_equal(expected, received)
 
-      ts = Float(timestamp)
-      raise WebhookSignatureVerificationError, 'Invalid webhook timestamp.' unless ts.finite?
+      ts = Float(timestamp, exception: false)
+      raise WebhookSignatureVerificationError, 'Invalid webhook timestamp.' unless ts&.finite?
 
       drift = (Time.now.to_i - ts).abs
       if tolerance.positive? && drift > tolerance

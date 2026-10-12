@@ -89,6 +89,14 @@ module Wajub
           next
         end
 
+        # The same key still being processed: the first request's answer is
+        # coming. Asked again with the same key, the API returns it.
+        if idempotency_key && RetryPolicy.idempotency_key_in_progress?(status, data) && attempt < RetryPolicy.max_retries
+          attempt += 1
+          sleep RetryPolicy.idempotency_conflict_delay_seconds(attempt)
+          next
+        end
+
         retry_after = response.dig(:headers, 'retry-after')&.to_i
         raise Errors.from_response(status, data, retry_after: retry_after)
       end

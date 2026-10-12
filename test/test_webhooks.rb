@@ -17,6 +17,15 @@ class TestWebhooks < Minitest::Test
     assert_equal 'trx_1', event.dig('data', 'id')
   end
 
+  def test_construct_event_answers_a_missing_header_with_a_signature_error
+    payload = '{"event":"payment.succeeded"}'
+    [[nil, Time.now.to_i.to_s], ['v1=deadbeef', nil], ['', Time.now.to_i.to_s], [sign(payload, 1), 'not-a-time']].each do |signature, timestamp|
+      assert_raises(Wajub::WebhookSignatureVerificationError) do
+        Wajub::Webhooks.new(SECRET).construct_event(payload, signature, timestamp)
+      end
+    end
+  end
+
   def test_construct_event_rejects_wrong_signature
     payload = '{"event":"payment.succeeded"}'
     assert_raises(Wajub::WebhookSignatureVerificationError) do
