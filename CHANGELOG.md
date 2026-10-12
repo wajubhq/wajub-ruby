@@ -7,7 +7,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## [1.2.1] — 2026-10-11
+## [1.3.0] — 2026-10-12
+
+1.2.1 was never published to RubyGems: its changes ship in this release.
+
+### Added
+- The tax and Shield methods the other server SDKs already had, with the
+  same paths and the same results as the Python SDK:
+  - `tax.reports`, `tax.list_codes`, `tax.retrieve_code`, `tax.jurisdictions`,
+    `tax.thresholds` and `tax.threshold_alerts`;
+  - `tax.list_registrations` (a page), `tax.create_registration`,
+    `tax.retrieve_registration`, `tax.update_registration` and
+    `tax.delete_registration`;
+  - `shield.list_blocklist`, `shield.add_to_blocklist` and
+    `shield.remove_from_blocklist`.
+
+  The README listed them, and calling one raised `NoMethodError`.
 
 ### Fixed
 - `customers.delete_tax_id` called `DELETE /customers/%2Fcustomers%2F…` and
@@ -30,7 +45,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.2.0] — 2026-10-01
 
-Tagged, never published to RubyGems. Its one change ships with 1.2.1.
+Tagged, never published to RubyGems. Its one change ships with 1.3.0.
 
 ### Removed
 - `payments.initialize_payment`, an alias of `payments.create`. Call `create`.

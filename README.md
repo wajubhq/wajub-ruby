@@ -30,7 +30,7 @@ Use **[Wajub.js](https://docs.wajub.com/libraries/components/js)** for embedded 
 Add to your Gemfile:
 
 ```ruby
-gem 'wajub', '~> 1.1'
+gem 'wajub', '~> 1.3'
 ```
 
 Or install directly:

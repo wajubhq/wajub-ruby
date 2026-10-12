@@ -252,6 +252,55 @@ module Wajub
     def calculate(params, options = nil)
       HttpUtils.pick_resource(post('/tax/calculate', params, options), 'tax', 'calculation')
     end
+
+    def reports(params = nil)
+      list = HttpUtils.pick_list(get('/tax/reports', params), 'reports', 'tax_reports')
+      [list[:data], list[:meta]]
+    end
+
+    def list_codes(params = nil)
+      list = HttpUtils.pick_list(get('/tax/codes', params), 'tax_codes', 'codes')
+      [list[:data], list[:meta]]
+    end
+
+    def retrieve_code(code)
+      HttpUtils.pick_resource(get("/tax/codes/#{URI.encode_www_form_component(code)}"), 'tax_code', 'code')
+    end
+
+    def list_registrations(params = nil)
+      PagedResult.create(self, '/tax/registrations', 'registrations', params)
+    end
+
+    def create_registration(params, options = nil)
+      HttpUtils.pick_resource(post('/tax/registrations', params, options), 'registration', 'tax_registration')
+    end
+
+    def retrieve_registration(id)
+      HttpUtils.pick_resource(get("/tax/registrations/#{URI.encode_www_form_component(id)}"), 'registration', 'tax_registration')
+    end
+
+    def update_registration(id, params, options = nil)
+      HttpUtils.pick_resource(put("/tax/registrations/#{URI.encode_www_form_component(id)}", params, options), 'registration', 'tax_registration')
+    end
+
+    def delete_registration(id, options = nil)
+      request('DELETE', "/tax/registrations/#{URI.encode_www_form_component(id)}", options: options)
+    end
+
+    def jurisdictions(params = nil)
+      list = HttpUtils.pick_list(get('/tax/jurisdictions', params), 'jurisdictions', 'tax_jurisdictions')
+      [list[:data], list[:meta]]
+    end
+
+    def thresholds(params = nil)
+      list = HttpUtils.pick_list(get('/tax/thresholds', params), 'thresholds', 'tax_thresholds')
+      [list[:data], list[:meta]]
+    end
+
+    def threshold_alerts(params = nil)
+      list = HttpUtils.pick_list(get('/tax/thresholds/alerts', params), 'alerts', 'threshold_alerts')
+      [list[:data], list[:meta]]
+    end
   end
 
   class ShieldResource < BaseClient
@@ -265,6 +314,19 @@ module Wajub
 
     def stats(params = nil)
       HttpUtils.pick_resource(get('/shield/stats', params), 'shield', 'stats')
+    end
+
+    def list_blocklist(params = nil)
+      list = HttpUtils.pick_list(get('/shield/blocklist', params), 'blocklist', 'entries')
+      [list[:data], list[:meta]]
+    end
+
+    def add_to_blocklist(params, options = nil)
+      HttpUtils.pick_resource(post('/shield/blocklist', params, options), 'blocklist', 'entry')
+    end
+
+    def remove_from_blocklist(id, options = nil)
+      request('DELETE', "/shield/blocklist/#{URI.encode_www_form_component(id)}", options: options)
     end
   end
 
