@@ -108,4 +108,53 @@ class TestResources < Minitest::Test
 
     assert_equal '/customers/cus%2F1', mock.last_request[:path]
   end
+
+  def invoices_with(mock)
+    Wajub::InvoicesResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+  end
+
+  def test_invoices_send_invoice_sends_the_invoice
+    mock = Wajub::MockTransport.new([{ status: 200, body: { 'invoice' => { 'id' => 'inv_1', 'status' => 'sent' } } }])
+
+    invoice = invoices_with(mock).send_invoice('inv/1', Wajub::RequestOptions.new(idempotency_key: 'send-1'))
+
+    assert_equal 'sent', invoice['status']
+    assert_equal 'POST', mock.last_request[:method]
+    assert_equal '/invoices/inv%2F1/send', mock.last_request[:path]
+    assert_equal 'send-1', mock.last_request[:headers]['Idempotency-Key']
+  end
+
+  def test_invoices_send_with_an_id_still_sends_the_invoice
+    mock = Wajub::MockTransport.new([{ status: 200, body: { 'invoice' => { 'id' => 'inv_1', 'status' => 'sent' } } }])
+
+    invoice = invoices_with(mock).send('inv_1', Wajub::RequestOptions.new(idempotency_key: 'send-2'))
+
+    assert_equal 'sent', invoice['status']
+    assert_equal '/invoices/inv_1/send', mock.last_request[:path]
+    assert_equal 'send-2', mock.last_request[:headers]['Idempotency-Key']
+  end
+
+  # InvoicesResource#send hid Object#send: send(:retrieve, 'inv_1'), as code
+  # that calls a method by name does, sent the invoice with id "retrieve".
+  def test_invoices_send_with_a_method_name_calls_that_method
+    mock = Wajub::MockTransport.new([
+      { status: 200, body: { 'invoice' => { 'id' => 'inv_1', 'status' => 'draft' } } },
+      { status: 200, body: { 'invoice' => { 'id' => 'inv_2', 'status' => 'draft' } } },
+      { status: 200, body: { 'invoice' => { 'id' => 'inv_3', 'status' => 'sent' } } }
+    ])
+    invoices = invoices_with(mock)
+
+    assert_equal 'inv_1', invoices.send(:retrieve, 'inv_1')['id']
+    assert_equal 'GET', mock.last_request[:method]
+    assert_equal '/invoices/inv_1', mock.last_request[:path]
+
+    assert_equal 'inv_2', invoices.send('retrieve', 'inv_2')['id']
+    assert_equal '/invoices/inv_2', mock.last_request[:path]
+
+    assert_equal 'sent', invoices.send(:send_invoice, 'inv_3')['status']
+    assert_equal '/invoices/inv_3/send', mock.last_request[:path]
+
+    assert_equal 'Wajub::InvoicesResource', invoices.send(:class).name
+    assert invoices.send(:respond_to?, :send_invoice)
+  end
 end

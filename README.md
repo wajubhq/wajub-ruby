@@ -75,7 +75,7 @@ An empty key raises `ArgumentError` when the client is built.
 | Refunds | `client.refunds` | `create`, `retrieve`, `list` |
 | Customers | `client.customers` | `create`, `retrieve`, `update`, `delete`, `list`, `block`, `unblock`, `activate`, `deactivate`, `list_tax_ids`, `create_tax_id`, `delete_tax_id` |
 | Payment links | `client.links` | `create`, `retrieve`, `update`, `delete`, `list` |
-| Invoices | `client.invoices` | `create`, `retrieve`, `update`, `delete`, `list`, `send`, `mark_paid`, `cancel` |
+| Invoices | `client.invoices` | `create`, `retrieve`, `update`, `delete`, `list`, `send_invoice`, `mark_paid`, `cancel` |
 | Payouts | `client.transfers` | `create`, `retrieve`, `list` |
 | Payout recipients | `client.beneficiaries` | `create`, `retrieve`, `update`, `delete`, `list` |
 | Destination checks | `client.identity` | `resolve`, `validate` |

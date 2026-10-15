@@ -186,8 +186,18 @@ module Wajub
       super(api_key, base_url, 'invoices', 'invoice', 'invoices', idempotency_key_prefix, transport: transport)
     end
 
-    def send(id, options = nil)
+    # Sends the invoice to its customer.
+    def send_invoice(id, options = nil)
       HttpUtils.pick_resource(post("/invoices/#{URI.encode_www_form_component(id)}/send", nil, options), 'invoice')
+    end
+
+    # Kept for code that sends an invoice with send(id). Called with a method
+    # name (a Symbol, or a String naming a method of this object), it is
+    # Object#send, so code that calls methods by name keeps working.
+    def send(id_or_method, *args, **kwargs, &block)
+      return super if id_or_method.is_a?(Symbol) || (id_or_method.is_a?(String) && respond_to?(id_or_method, true))
+
+      send_invoice(id_or_method, *args, **kwargs)
     end
 
     def mark_paid(id, params = nil, options = nil)
