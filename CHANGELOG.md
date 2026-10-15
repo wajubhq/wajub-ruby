@@ -7,6 +7,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- **`webhooks.construct_event` keeps the replay window.** A tolerance of `0` or
+  less switched the timestamp check off, so an old delivery sent again was
+  accepted. A tolerance that is not a positive number now keeps the default of
+  300 seconds; `nil` used to raise `NoMethodError`.
+
 ## [1.3.0] — 2026-10-12
 
 1.2.1 was not published to RubyGems: its changes ship in this release.
