@@ -109,4 +109,20 @@ class TestBaseClient < Minitest::Test
 
     assert_equal({ 'amount' => ['Must be positive'] }, error.field_errors)
   end
+
+  # Built by hand, as 1.3.0 allowed: errors that are not a Hash are kept as
+  # they are, and field_errors stays empty.
+  def test_an_error_built_with_errors_that_are_not_a_hash_still_builds
+    error = Wajub::InvalidRequestError.new('Invalid', code: 'validation_error', http_status: 422, errors: ['msg'])
+
+    assert_equal ['msg'], error.errors
+    assert_nil error.field_errors
+  end
+
+  def test_an_error_built_with_lists_of_messages_keeps_them_in_field_errors
+    error = Wajub::InvalidRequestError.new('Invalid', code: 'validation_error', http_status: 422,
+                                                      errors: { 'amount' => %w[a b] })
+
+    assert_equal({ 'amount' => %w[a b] }, error.field_errors)
+  end
 end

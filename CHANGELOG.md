@@ -23,6 +23,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `payments.retrieve('pay_1/refunds')` listed refunds, and
   `customers.delete('cus_1/tax_ids/txi_1')` deleted a tax id. No Wajub id
   contains `/`.
+- **`invoices.send` with a Symbol calls that method**, as Ruby's `send` does,
+  for code and libraries that call methods by name.
+  `invoices.send(:retrieve, id)` used to try to send an invoice whose id is
+  `retrieve`. A String is still an invoice id, whatever it reads.
 
 ### Deprecated
 - **`listen.config` and `listen.auth`.** The API no longer offers them. To
@@ -31,10 +35,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`-W:deprecated`).
 
 ### Fixed
-- **`invoices.send` with a Symbol calls that method**, as Ruby's `send` does,
-  for code and libraries that call methods by name.
-  `invoices.send(:retrieve, id)` used to try to send an invoice whose id is
-  `retrieve`. A String is still an invoice id, whatever it reads.
 - **`webhooks.construct_event` keeps the replay window.** A tolerance of `0` or
   less switched the timestamp check off, so an old delivery sent again was
   accepted. A tolerance that is not a positive number now keeps the default of
