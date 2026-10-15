@@ -165,7 +165,7 @@ API errors raise a subclass of `Wajub::WajubError`:
 begin
   client.payments.create(params)
 rescue Wajub::InvalidRequestError => e
-  puts e.errors # field-level validation errors
+  puts e.field_errors # every validation message, by field
 rescue Wajub::AuthenticationError
   # check your API key
 rescue Wajub::RateLimitError => e
@@ -185,7 +185,7 @@ end
 | `Wajub::ApiConnectionError` | No response: network error or timeout |
 | `Wajub::WajubError` | Any other error status, and the parent of all of the above |
 
-Every error carries `message`, `code`, `http_status`, `errors` (one message per field) and `raw` (the response body).
+Every error carries `message`, `code`, `http_status`, `field_errors` (every validation message of each field), `errors` (the first message of each field) and `raw` (the response body).
 
 ## Testing
 

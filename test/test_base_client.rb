@@ -61,4 +61,52 @@ class TestBaseClient < Minitest::Test
     error = assert_raises(Wajub::InvalidRequestError) { client.post('/payments', { 'amount' => -1 }) }
     assert_equal 'Unprocessable', error.message
   end
+
+  # errors keeps the first message of each field; field_errors keeps them all.
+  def test_invalid_request_keeps_every_message_of_a_field
+    mock = Wajub::MockTransport.new([
+      {
+        status: 422,
+        body: {
+          'message' => 'The given data was invalid.',
+          'errors' => {
+            'amount' => ['The amount must be a number.', 'The amount must be at least 1.'],
+            'currency' => ['The currency field is required.'],
+            'email' => 'The email must be a valid email address.'
+          }
+        }
+      }
+    ])
+    client = Wajub::BaseClient.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+
+    error = assert_raises(Wajub::InvalidRequestError) { client.post('/payments', { 'amount' => 'x' }) }
+
+    assert_equal({
+                   'amount' => ['The amount must be a number.', 'The amount must be at least 1.'],
+                   'currency' => ['The currency field is required.'],
+                   'email' => ['The email must be a valid email address.']
+                 }, error.field_errors)
+    assert_equal({
+                   'amount' => 'The amount must be a number.',
+                   'currency' => 'The currency field is required.',
+                   'email' => 'The email must be a valid email address.'
+                 }, error.errors)
+  end
+
+  def test_an_error_without_field_messages_has_no_field_errors
+    mock = Wajub::MockTransport.new([{ status: 404, body: { 'message' => 'Not found' } }])
+    client = Wajub::BaseClient.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+
+    error = assert_raises(Wajub::NotFoundError) { client.get('/payments/pay_x') }
+
+    assert_nil error.errors
+    assert_nil error.field_errors
+  end
+
+  def test_an_error_built_with_errors_alone_lists_them_in_field_errors
+    error = Wajub::InvalidRequestError.new('Invalid', code: 'validation_error', http_status: 422,
+                                                      errors: { 'amount' => 'Must be positive' })
+
+    assert_equal({ 'amount' => ['Must be positive'] }, error.field_errors)
+  end
 end

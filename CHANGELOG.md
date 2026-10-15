@@ -10,6 +10,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **`field_errors` on API errors, every validation message of each field.** A
+  `422` can give a field several messages; `errors` keeps only the first one.
+  `e.field_errors['amount']` lists them all, in the order the API sent them.
+  `errors` is unchanged.
 - **`invoices.send_invoice`** sends an invoice to its customer. `invoices.send`
   still does, but it is also the name of Ruby's `send`: prefer `send_invoice`.
 
