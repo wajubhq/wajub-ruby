@@ -93,10 +93,10 @@ class TestResources < Minitest::Test
     mock = Wajub::MockTransport.new([{ status: 200, body: {} }])
     customers = Wajub::CustomersResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
 
-    customers.delete_tax_id('cus_1', 'txi/2', Wajub::RequestOptions.new(idempotency_key: 'del-1'))
+    customers.delete_tax_id('cus_1', 'txi?2', Wajub::RequestOptions.new(idempotency_key: 'del-1'))
 
     assert_equal 'DELETE', mock.last_request[:method]
-    assert_equal '/customers/cus_1/tax_ids/txi%2F2', mock.last_request[:path]
+    assert_equal '/customers/cus_1/tax_ids/txi%3F2', mock.last_request[:path]
     assert_equal 'del-1', mock.last_request[:headers]['Idempotency-Key']
   end
 
@@ -104,9 +104,9 @@ class TestResources < Minitest::Test
     mock = Wajub::MockTransport.new([{ status: 200, body: {} }])
     customers = Wajub::CustomersResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
 
-    customers.delete('cus/1')
+    customers.delete('cus?1')
 
-    assert_equal '/customers/cus%2F1', mock.last_request[:path]
+    assert_equal '/customers/cus%3F1', mock.last_request[:path]
   end
 
   def invoices_with(mock)
@@ -116,11 +116,11 @@ class TestResources < Minitest::Test
   def test_invoices_send_invoice_sends_the_invoice
     mock = Wajub::MockTransport.new([{ status: 200, body: { 'invoice' => { 'id' => 'inv_1', 'status' => 'sent' } } }])
 
-    invoice = invoices_with(mock).send_invoice('inv/1', Wajub::RequestOptions.new(idempotency_key: 'send-1'))
+    invoice = invoices_with(mock).send_invoice('inv?1', Wajub::RequestOptions.new(idempotency_key: 'send-1'))
 
     assert_equal 'sent', invoice['status']
     assert_equal 'POST', mock.last_request[:method]
-    assert_equal '/invoices/inv%2F1/send', mock.last_request[:path]
+    assert_equal '/invoices/inv%3F1/send', mock.last_request[:path]
     assert_equal 'send-1', mock.last_request[:headers]['Idempotency-Key']
   end
 

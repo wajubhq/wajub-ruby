@@ -2,6 +2,7 @@
 
 require 'securerandom'
 require 'json'
+require 'uri'
 
 module Wajub
   module HttpUtils
@@ -15,6 +16,16 @@ module Wajub
 
     def api_url
       API_URL
+    end
+
+    # An id as one segment of a request path. The API reads an encoded "/" as
+    # a separator, so an id holding one would reach another route; no Wajub id
+    # holds one, so it is refused before anything is sent.
+    def path_segment(id)
+      value = id.to_s
+      raise ArgumentError, "Wajub: an id must not contain \"/\" (got #{value.inspect})" if value.include?('/')
+
+      URI.encode_www_form_component(value)
     end
 
     def create_idempotency_key(prefix = 'wajub')

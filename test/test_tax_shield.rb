@@ -51,10 +51,10 @@ class TestTaxShield < Minitest::Test
   end
 
   def test_retrieve_code_unwraps_tax_code_and_encodes_the_code
-    code = tax({ 'tax_code' => { 'code' => 'txcd/1' } }).retrieve_code('txcd/1')
+    code = tax({ 'tax_code' => { 'code' => 'txcd?1' } }).retrieve_code('txcd?1')
 
-    assert_equal({ 'code' => 'txcd/1' }, code)
-    assert_equal ['GET', '/tax/codes/txcd%2F1'], last.values_at(:method, :path)
+    assert_equal({ 'code' => 'txcd?1' }, code)
+    assert_equal ['GET', '/tax/codes/txcd%3F1'], last.values_at(:method, :path)
   end
 
   def test_list_registrations_is_a_page
@@ -123,8 +123,8 @@ class TestTaxShield < Minitest::Test
   end
 
   def test_remove_from_blocklist_deletes_the_entry
-    shield({}).remove_from_blocklist('blk/1', Wajub::RequestOptions.new(idempotency_key: 'rm-1'))
+    shield({}).remove_from_blocklist('blk?1', Wajub::RequestOptions.new(idempotency_key: 'rm-1'))
 
-    assert_equal ['DELETE', '/shield/blocklist/blk%2F1', 'rm-1'], [last[:method], last[:path], last[:headers]['Idempotency-Key']]
+    assert_equal ['DELETE', '/shield/blocklist/blk%3F1', 'rm-1'], [last[:method], last[:path], last[:headers]['Idempotency-Key']]
   end
 end
