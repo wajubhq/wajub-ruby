@@ -21,7 +21,7 @@ No other gem is needed.
 Add to your Gemfile:
 
 ```ruby
-gem 'wajub', '~> 1.3'
+gem 'wajub', '~> 1.4'
 ```
 
 Or install directly:
