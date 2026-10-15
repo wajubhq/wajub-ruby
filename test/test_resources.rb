@@ -136,10 +136,9 @@ class TestResources < Minitest::Test
 
   # InvoicesResource#send hid Object#send: send(:retrieve, 'inv_1'), as code
   # that calls a method by name does, sent the invoice with id "retrieve".
-  def test_invoices_send_with_a_method_name_calls_that_method
+  def test_invoices_send_with_a_symbol_calls_that_method
     mock = Wajub::MockTransport.new([
       { status: 200, body: { 'invoice' => { 'id' => 'inv_1', 'status' => 'draft' } } },
-      { status: 200, body: { 'invoice' => { 'id' => 'inv_2', 'status' => 'draft' } } },
       { status: 200, body: { 'invoice' => { 'id' => 'inv_3', 'status' => 'sent' } } }
     ])
     invoices = invoices_with(mock)
@@ -148,13 +147,32 @@ class TestResources < Minitest::Test
     assert_equal 'GET', mock.last_request[:method]
     assert_equal '/invoices/inv_1', mock.last_request[:path]
 
-    assert_equal 'inv_2', invoices.send('retrieve', 'inv_2')['id']
-    assert_equal '/invoices/inv_2', mock.last_request[:path]
-
     assert_equal 'sent', invoices.send(:send_invoice, 'inv_3')['status']
     assert_equal '/invoices/inv_3/send', mock.last_request[:path]
 
     assert_equal 'Wajub::InvoicesResource', invoices.send(:class).name
     assert invoices.send(:respond_to?, :send_invoice)
+  end
+
+  # A String is always an invoice id, even one that names a method: an id from
+  # a request, such as invoices.send(params[:id]), never calls a method.
+  def test_invoices_send_with_a_string_always_sends_that_invoice
+    names = %w[exit api_key freeze inspect list retrieve]
+    mock = Wajub::MockTransport.new(names.map { |name| { status: 200, body: { 'invoice' => { 'id' => name, 'status' => 'sent' } } } })
+    invoices = invoices_with(mock)
+
+    names.each do |name|
+      begin
+        invoice = invoices.send(name)
+      rescue SystemExit
+        flunk "send(#{name.inspect}) called Kernel#exit"
+      end
+
+      assert_kind_of Hash, invoice, "send(#{name.inspect}) returned #{invoice.inspect}"
+      assert_equal 'sent', invoice['status']
+      assert_equal 'POST', mock.last_request[:method]
+      assert_equal "/invoices/#{name}/send", mock.last_request[:path]
+    end
+    refute_predicate invoices, :frozen?
   end
 end

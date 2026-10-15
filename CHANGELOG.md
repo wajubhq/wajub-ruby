@@ -18,10 +18,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   still does, but it is also the name of Ruby's `send`: prefer `send_invoice`.
 
 ### Fixed
-- **`invoices.send` with a method name calls that method**, as Ruby's `send`
-  does, for code and libraries that call methods by name.
+- **`invoices.send` with a Symbol calls that method**, as Ruby's `send` does,
+  for code and libraries that call methods by name.
   `invoices.send(:retrieve, id)` used to try to send an invoice whose id is
-  `retrieve`.
+  `retrieve`. A String is still an invoice id, whatever it reads.
 - **`webhooks.construct_event` keeps the replay window.** A tolerance of `0` or
   less switched the timestamp check off, so an old delivery sent again was
   accepted. A tolerance that is not a positive number now keeps the default of

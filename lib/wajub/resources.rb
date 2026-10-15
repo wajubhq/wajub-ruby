@@ -191,11 +191,12 @@ module Wajub
       HttpUtils.pick_resource(post("/invoices/#{URI.encode_www_form_component(id)}/send", nil, options), 'invoice')
     end
 
-    # Kept for code that sends an invoice with send(id). Called with a method
-    # name (a Symbol, or a String naming a method of this object), it is
-    # Object#send, so code that calls methods by name keeps working.
+    # Kept for code that sends an invoice with send(id). Called with a Symbol,
+    # it is Object#send, so code that calls methods by name keeps working. A
+    # String is always an invoice id, even one that names a method, so an id
+    # taken from a request never calls a method.
     def send(id_or_method, *args, **kwargs, &block)
-      return super if id_or_method.is_a?(Symbol) || (id_or_method.is_a?(String) && respond_to?(id_or_method, true))
+      return super if id_or_method.is_a?(Symbol)
 
       send_invoice(id_or_method, *args, **kwargs)
     end
