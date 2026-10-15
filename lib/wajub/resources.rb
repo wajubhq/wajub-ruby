@@ -341,12 +341,19 @@ module Wajub
     end
   end
 
+  # Deprecated: the API no longer offers these calls. To receive webhooks on
+  # your machine, forward them with the Wajub CLI's `wajub listen`. Each call
+  # warns when Ruby shows deprecation warnings (-W:deprecated).
   class ListenResource < BaseClient
     def config
+      warn('Wajub: listen.config is deprecated: the API no longer offers it. ' \
+           'Forward webhooks with the Wajub CLI: wajub listen', uplevel: 1, category: :deprecated)
       HttpUtils.pick_resource(get('/listen/config'), 'config', 'listen')
     end
 
     def auth(params, options = nil)
+      warn('Wajub: listen.auth is deprecated: the API no longer offers it. ' \
+           'Forward webhooks with the Wajub CLI: wajub listen', uplevel: 1, category: :deprecated)
       HttpUtils.pick_resource(post('/listen/auth', params, options), 'auth', 'listen')
     end
   end

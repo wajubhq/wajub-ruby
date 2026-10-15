@@ -175,4 +175,36 @@ class TestResources < Minitest::Test
     end
     refute_predicate invoices, :frozen?
   end
+
+  # The API no longer offers /listen/config and /listen/auth: both methods are
+  # deprecated in favour of the Wajub CLI's `wajub listen`, and still send the
+  # same request.
+  def test_listen_methods_are_deprecated
+    mock = Wajub::MockTransport.new([
+      { status: 200, body: { 'config' => { 'host' => 'example' } } },
+      { status: 200, body: { 'auth' => { 'token' => 'tok' } } }
+    ])
+    listen = Wajub::ListenResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+    shown = Warning[:deprecated]
+    Warning[:deprecated] = true
+
+    assert_output(nil, /listen\.config is deprecated.*wajub listen/) { listen.config }
+    assert_equal '/listen/config', mock.last_request[:path]
+
+    assert_output(nil, /listen\.auth is deprecated.*wajub listen/) { listen.auth('channel' => 'x') }
+    assert_equal '/listen/auth', mock.last_request[:path]
+  ensure
+    Warning[:deprecated] = shown
+  end
+
+  def test_listen_methods_stay_quiet_when_deprecation_warnings_are_off
+    mock = Wajub::MockTransport.new([{ status: 200, body: {} }])
+    listen = Wajub::ListenResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+    shown = Warning[:deprecated]
+    Warning[:deprecated] = false
+
+    assert_output(nil, '') { listen.config }
+  ensure
+    Warning[:deprecated] = shown
+  end
 end

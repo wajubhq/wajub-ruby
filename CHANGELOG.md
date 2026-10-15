@@ -17,6 +17,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`invoices.send_invoice`** sends an invoice to its customer. `invoices.send`
   still does, but it is also the name of Ruby's `send`: prefer `send_invoice`.
 
+### Deprecated
+- **`listen.config` and `listen.auth`.** The API no longer offers them. To
+  receive webhooks on your machine, forward them with the Wajub CLI:
+  `wajub listen`. Both warn when Ruby shows deprecation warnings
+  (`-W:deprecated`).
+
 ### Fixed
 - **`invoices.send` with a Symbol calls that method**, as Ruby's `send` does,
   for code and libraries that call methods by name.
