@@ -32,6 +32,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`-W:deprecated`).
 
 ### Fixed
+- **A space in an id goes out as `%20`.** It went out as `+`, which the API
+  reads as a plus sign.
 - **`webhooks.construct_event` keeps the replay window.** A tolerance of `0` or
   less switched the timestamp check off, so an old delivery sent again was
   accepted. A tolerance that is not a positive number now keeps the default of
