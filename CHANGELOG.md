@@ -22,6 +22,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   for code and libraries that call methods by name.
   `invoices.send(:retrieve, id)` used to try to send an invoice whose id is
   `retrieve`. A String is still an invoice id, whatever it reads.
+- **A `nil` id raises `ArgumentError`** before anything is sent. It used to
+  send the request without the id: `payments.retrieve(nil)` listed payments.
 
 ### Deprecated
 - **`listen.config` and `listen.auth`.** The API no longer offers them. To
