@@ -18,11 +18,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   still does, but it is also the name of Ruby's `send`: prefer `send_invoice`.
 
 ### Changed
-- **An id containing `/` raises `ArgumentError` before anything is sent.** The
-  API read it as a path separator, so the call reached another route:
-  `payments.retrieve('pay_1/refunds')` listed refunds, and
-  `customers.delete('cus_1/tax_ids/txi_1')` deleted a tax id. No Wajub id
-  contains `/`.
+- **An id that contains `/`, or is empty, `.` or `..`, raises `ArgumentError`
+  before anything is sent.** Such an id reached another route:
+  `payments.retrieve('pay_1/refunds')` listed refunds,
+  `customers.delete('cus_1/tax_ids/txi_1')` deleted a tax id, and
+  `payments.retrieve('')` listed payments. No Wajub id takes these forms, so a
+  valid call is unchanged.
 - **`invoices.send` with a Symbol calls that method**, as Ruby's `send` does,
   for code and libraries that call methods by name.
   `invoices.send(:retrieve, id)` used to try to send an invoice whose id is

@@ -19,11 +19,13 @@ module Wajub
     end
 
     # An id as one segment of a request path. The API reads an encoded "/" as
-    # a separator, so an id holding one would reach another route; no Wajub id
-    # holds one, so it is refused before anything is sent.
+    # a separator, an empty id leaves its segment out, and "." or ".." are dot
+    # segments that servers resolve: such an id would reach another route. No
+    # Wajub id takes these forms, so it is refused before anything is sent.
     def path_segment(id)
       value = id.to_s
       raise ArgumentError, "Wajub: an id must not contain \"/\" (got #{value.inspect})" if value.include?('/')
+      raise ArgumentError, "Wajub: #{value.inspect} is not a Wajub id" if ['', '.', '..'].include?(value)
 
       URI.encode_www_form_component(value)
     end

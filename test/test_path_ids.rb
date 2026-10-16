@@ -62,6 +62,30 @@ class TestPathIds < Minitest::Test
     end
   end
 
+  # An empty id left its segment out ("/payments/" is the list), and "." or ".."
+  # are dot segments that servers and proxies resolve to another path.
+  def test_an_empty_or_dot_id_is_refused_before_anything_is_sent
+    mock = Wajub::MockTransport.new([])
+    all = resources(mock)
+
+    ['', '.', '..', nil].each do |id|
+      calls(id).each do |resource, method, args|
+        assert_raises(ArgumentError, "#{resource}.#{method}(#{id.inspect})") do
+          all.fetch(resource).public_send(method, *args)
+        end
+        assert_nil mock.last_request, "#{resource}.#{method}(#{id.inspect}) sent #{mock.last_request.inspect}"
+      end
+    end
+  end
+
+  def test_an_id_with_dots_inside_is_still_sent
+    mock = Wajub::MockTransport.new([])
+
+    resources(mock).fetch(:payments).retrieve('trx.1..2')
+
+    assert_equal '/payments/trx.1..2', mock.last_request[:path]
+  end
+
   def test_an_id_without_a_slash_is_still_sent_encoded
     mock = Wajub::MockTransport.new([])
     all = resources(mock)
