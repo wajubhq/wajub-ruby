@@ -18,12 +18,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   still does, but it is also the name of Ruby's `send`: prefer `send_invoice`.
 
 ### Changed
-- **An id that contains `/`, or is empty, `.` or `..`, raises `ArgumentError`
-  before anything is sent.** Such an id reached another route:
-  `payments.retrieve('pay_1/refunds')` listed refunds,
-  `customers.delete('cus_1/tax_ids/txi_1')` deleted a tax id, and
-  `payments.retrieve('')` listed payments. No Wajub id takes these forms, so a
-  valid call is unchanged.
 - **`invoices.send` with a Symbol calls that method**, as Ruby's `send` does,
   for code and libraries that call methods by name.
   `invoices.send(:retrieve, id)` used to try to send an invoice whose id is
@@ -40,6 +34,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   less switched the timestamp check off, so an old delivery sent again was
   accepted. A tolerance that is not a positive number now keeps the default of
   300 seconds; `nil` used to raise `NoMethodError`.
+
+### Security
+- **An id that is not a Wajub id is refused before anything is sent.** If an
+  id you pass can come from a URL or a form, a call could act on another
+  resource of your account: `customers.delete('cus_1/tax_ids/txi_1')` deleted a
+  tax ID. An id that is empty, `.` or `..`, or contains `/`, now raises
+  `ArgumentError`. Wajub ids never take these forms, so valid calls are
+  unchanged.
 
 ## [1.3.0] — 2026-10-12
 

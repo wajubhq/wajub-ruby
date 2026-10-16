@@ -11,7 +11,7 @@ module Wajub
       @code = code
       @http_status = http_status
       @errors = errors
-      @field_errors = field_errors || (errors.transform_values { |value| Array(value) } if errors.is_a?(Hash))
+      @field_errors = field_errors || (errors.transform_values { |value| value.is_a?(Array) ? value : [value] } if errors.is_a?(Hash))
       @raw = raw
     end
   end

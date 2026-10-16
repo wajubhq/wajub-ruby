@@ -23,11 +23,15 @@ module Wajub
     # segments that servers resolve: such an id would reach another route. No
     # Wajub id takes these forms, so it is refused before anything is sent.
     def path_segment(id)
+      raise ArgumentError, 'Wajub: an id is required (got nil)' if id.nil?
+
       value = id.to_s
       raise ArgumentError, "Wajub: an id must not contain \"/\" (got #{value.inspect})" if value.include?('/')
       raise ArgumentError, "Wajub: #{value.inspect} is not a Wajub id" if ['', '.', '..'].include?(value)
 
-      URI.encode_www_form_component(value)
+      # Form encoding writes a space as "+", which a path reads as a plus sign;
+      # it writes a "+" as %2B, so every "+" left is a space.
+      URI.encode_www_form_component(value).gsub('+', '%20')
     end
 
     def create_idempotency_key(prefix = 'wajub')

@@ -78,6 +78,24 @@ class TestPathIds < Minitest::Test
     end
   end
 
+  def test_a_nil_id_is_named_nil_in_the_error
+    mock = Wajub::MockTransport.new([])
+
+    error = assert_raises(ArgumentError) { resources(mock).fetch(:payments).retrieve(nil) }
+
+    assert_match(/\bnil\b/, error.message)
+    refute_includes error.message, '""'
+  end
+
+  # A space is %20 in a path: "+" is a literal plus there, not a space.
+  def test_a_space_in_an_id_goes_out_as_percent_20
+    mock = Wajub::MockTransport.new([])
+
+    resources(mock).fetch(:payments).retrieve('a b+c')
+
+    assert_equal '/payments/a%20b%2Bc', mock.last_request[:path]
+  end
+
   def test_an_id_with_dots_inside_is_still_sent
     mock = Wajub::MockTransport.new([])
 

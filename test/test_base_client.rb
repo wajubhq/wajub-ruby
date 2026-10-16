@@ -119,6 +119,14 @@ class TestBaseClient < Minitest::Test
     assert_nil error.field_errors
   end
 
+  # Built by hand, a value that is not a list is one message, whatever it is.
+  def test_an_error_built_with_nil_or_hash_values_keeps_each_as_one_message
+    error = Wajub::InvalidRequestError.new('Invalid', code: 'validation_error', http_status: 422,
+                                                      errors: { 'amount' => nil, 'address' => { 'city' => 'required' } })
+
+    assert_equal({ 'amount' => [nil], 'address' => [{ 'city' => 'required' }] }, error.field_errors)
+  end
+
   def test_an_error_built_with_lists_of_messages_keeps_them_in_field_errors
     error = Wajub::InvalidRequestError.new('Invalid', code: 'validation_error', http_status: 422,
                                                       errors: { 'amount' => %w[a b] })
