@@ -20,7 +20,7 @@ module Wajub
     end
 
     def retrieve(id)
-      HttpUtils.pick_resource(get("/#{@path}/#{URI.encode_www_form_component(id)}"), @singular)
+      HttpUtils.pick_resource(get("/#{@path}/#{HttpUtils.path_segment(id)}"), @singular)
     end
 
     def list(params = nil)
@@ -28,11 +28,11 @@ module Wajub
     end
 
     def update(id, params, options = nil)
-      HttpUtils.pick_resource(put("/#{@path}/#{URI.encode_www_form_component(id)}", params, options), @singular)
+      HttpUtils.pick_resource(put("/#{@path}/#{HttpUtils.path_segment(id)}", params, options), @singular)
     end
 
     def delete(id, options = nil)
-      request('DELETE', "/#{@path}/#{URI.encode_www_form_component(id)}", options: options)
+      request('DELETE', "/#{@path}/#{HttpUtils.path_segment(id)}", options: options)
     end
   end
 
@@ -42,7 +42,7 @@ module Wajub
     end
 
     def retrieve(id)
-      res = get("/payments/#{URI.encode_www_form_component(id)}")
+      res = get("/payments/#{HttpUtils.path_segment(id)}")
       to_payment_object('transaction' => HttpUtils.pick_resource(res, 'transaction'))
     end
 
@@ -51,22 +51,22 @@ module Wajub
     end
 
     def cancel(id, options = nil)
-      res = delete("/payments/#{URI.encode_www_form_component(id)}", options)
+      res = delete("/payments/#{HttpUtils.path_segment(id)}", options)
       to_payment_object('transaction' => HttpUtils.pick_resource(res, 'transaction'))
     end
 
     def process(id, params, options = nil)
-      res = post("/payments/#{URI.encode_www_form_component(id)}", params, options)
+      res = post("/payments/#{HttpUtils.path_segment(id)}", params, options)
       to_payment_object('transaction' => HttpUtils.pick_resource(res, 'transaction'))
     end
 
     def process_split(id, params, options = nil)
-      res = post("/payments/#{URI.encode_www_form_component(id)}/splits", params, options)
+      res = post("/payments/#{HttpUtils.path_segment(id)}/splits", params, options)
       to_payment_object('transaction' => HttpUtils.pick_resource(res, 'transaction'))
     end
 
     def list_refunds(id, params = nil)
-      list = HttpUtils.pick_list(get("/payments/#{URI.encode_www_form_component(id)}/refunds", params), 'refunds')
+      list = HttpUtils.pick_list(get("/payments/#{HttpUtils.path_segment(id)}/refunds", params), 'refunds')
       [list[:data], list[:meta]]
     end
 
@@ -116,11 +116,11 @@ module Wajub
     end
 
     def retrieve(id)
-      HttpUtils.pick_resource(get("/events/#{URI.encode_www_form_component(id)}"), 'event')
+      HttpUtils.pick_resource(get("/events/#{HttpUtils.path_segment(id)}"), 'event')
     end
 
     def resend(id, options = nil)
-      HttpUtils.pick_resource(post("/events/#{URI.encode_www_form_component(id)}/resend", nil, options), 'event')
+      HttpUtils.pick_resource(post("/events/#{HttpUtils.path_segment(id)}/resend", nil, options), 'event')
     end
   end
 
@@ -130,33 +130,33 @@ module Wajub
     end
 
     def block(id, params = nil, options = nil)
-      HttpUtils.pick_resource(post("/customers/#{URI.encode_www_form_component(id)}/block", params, options), 'customer')
+      HttpUtils.pick_resource(post("/customers/#{HttpUtils.path_segment(id)}/block", params, options), 'customer')
     end
 
     def unblock(id, options = nil)
-      HttpUtils.pick_resource(post("/customers/#{URI.encode_www_form_component(id)}/unblock", nil, options), 'customer')
+      HttpUtils.pick_resource(post("/customers/#{HttpUtils.path_segment(id)}/unblock", nil, options), 'customer')
     end
 
     def activate(id, options = nil)
-      HttpUtils.pick_resource(post("/customers/#{URI.encode_www_form_component(id)}/activate", nil, options), 'customer')
+      HttpUtils.pick_resource(post("/customers/#{HttpUtils.path_segment(id)}/activate", nil, options), 'customer')
     end
 
     def deactivate(id, options = nil)
-      HttpUtils.pick_resource(post("/customers/#{URI.encode_www_form_component(id)}/deactivate", nil, options), 'customer')
+      HttpUtils.pick_resource(post("/customers/#{HttpUtils.path_segment(id)}/deactivate", nil, options), 'customer')
     end
 
     def list_tax_ids(customer_id)
-      list = HttpUtils.pick_list(get("/customers/#{URI.encode_www_form_component(customer_id)}/tax_ids"), 'tax_ids')
+      list = HttpUtils.pick_list(get("/customers/#{HttpUtils.path_segment(customer_id)}/tax_ids"), 'tax_ids')
       [list[:data], list[:meta]]
     end
 
     def create_tax_id(customer_id, params, options = nil)
-      HttpUtils.pick_resource(post("/customers/#{URI.encode_www_form_component(customer_id)}/tax_ids", params, options), 'tax_id')
+      HttpUtils.pick_resource(post("/customers/#{HttpUtils.path_segment(customer_id)}/tax_ids", params, options), 'tax_id')
     end
 
     def delete_tax_id(customer_id, tax_id, options = nil)
       # Not `delete`: on a CrudResource that one takes an id and encodes it as a path segment.
-      path = "/customers/#{URI.encode_www_form_component(customer_id)}/tax_ids/#{URI.encode_www_form_component(tax_id)}"
+      path = "/customers/#{HttpUtils.path_segment(customer_id)}/tax_ids/#{HttpUtils.path_segment(tax_id)}"
       request('DELETE', path, options: options)
     end
   end
@@ -167,7 +167,7 @@ module Wajub
     end
 
     def regenerate_token(id, options = nil)
-      HttpUtils.pick_resource(post("/accounts/#{URI.encode_www_form_component(id)}/token", nil, options), 'account')
+      HttpUtils.pick_resource(post("/accounts/#{HttpUtils.path_segment(id)}/token", nil, options), 'account')
     end
   end
 
@@ -177,7 +177,7 @@ module Wajub
     end
 
     def rotate_secret(id, options = nil)
-      HttpUtils.pick_resource(post("/webhooks/#{URI.encode_www_form_component(id)}/rotate-secret", nil, options), 'endpoint')
+      HttpUtils.pick_resource(post("/webhooks/#{HttpUtils.path_segment(id)}/rotate-secret", nil, options), 'endpoint')
     end
   end
 
@@ -186,16 +186,27 @@ module Wajub
       super(api_key, base_url, 'invoices', 'invoice', 'invoices', idempotency_key_prefix, transport: transport)
     end
 
-    def send(id, options = nil)
-      HttpUtils.pick_resource(post("/invoices/#{URI.encode_www_form_component(id)}/send", nil, options), 'invoice')
+    # Sends the invoice to its customer.
+    def send_invoice(id, options = nil)
+      HttpUtils.pick_resource(post("/invoices/#{HttpUtils.path_segment(id)}/send", nil, options), 'invoice')
+    end
+
+    # Kept for code that sends an invoice with send(id). Called with a Symbol,
+    # it is Object#send, so code that calls methods by name keeps working. A
+    # String is always an invoice id, even one that names a method, so an id
+    # taken from a request never calls a method.
+    def send(id_or_method, *args, **kwargs, &block)
+      return super if id_or_method.is_a?(Symbol)
+
+      send_invoice(id_or_method, *args, **kwargs)
     end
 
     def mark_paid(id, params = nil, options = nil)
-      HttpUtils.pick_resource(post("/invoices/#{URI.encode_www_form_component(id)}/mark-paid", params, options), 'invoice')
+      HttpUtils.pick_resource(post("/invoices/#{HttpUtils.path_segment(id)}/mark-paid", params, options), 'invoice')
     end
 
     def cancel(id, options = nil)
-      HttpUtils.pick_resource(post("/invoices/#{URI.encode_www_form_component(id)}/cancel", nil, options), 'invoice')
+      HttpUtils.pick_resource(post("/invoices/#{HttpUtils.path_segment(id)}/cancel", nil, options), 'invoice')
     end
   end
 
@@ -205,23 +216,23 @@ module Wajub
     end
 
     def retrieve(id)
-      HttpUtils.pick_resource(get("/disputes/#{URI.encode_www_form_component(id)}"), 'dispute')
+      HttpUtils.pick_resource(get("/disputes/#{HttpUtils.path_segment(id)}"), 'dispute')
     end
 
     def submit_evidence(id, params, options = nil)
-      HttpUtils.pick_resource(post("/disputes/#{URI.encode_www_form_component(id)}/submit-evidence", params, options), 'dispute')
+      HttpUtils.pick_resource(post("/disputes/#{HttpUtils.path_segment(id)}/submit-evidence", params, options), 'dispute')
     end
 
     def accept(id, options = nil)
-      HttpUtils.pick_resource(post("/disputes/#{URI.encode_www_form_component(id)}/accept", nil, options), 'dispute')
+      HttpUtils.pick_resource(post("/disputes/#{HttpUtils.path_segment(id)}/accept", nil, options), 'dispute')
     end
 
     def close(id, options = nil)
-      HttpUtils.pick_resource(post("/disputes/#{URI.encode_www_form_component(id)}/close", nil, options), 'dispute')
+      HttpUtils.pick_resource(post("/disputes/#{HttpUtils.path_segment(id)}/close", nil, options), 'dispute')
     end
 
     def send_message(id, params, options = nil)
-      HttpUtils.pick_resource(post("/disputes/#{URI.encode_www_form_component(id)}/messages", params, options), 'dispute')
+      HttpUtils.pick_resource(post("/disputes/#{HttpUtils.path_segment(id)}/messages", params, options), 'dispute')
     end
   end
 
@@ -264,7 +275,7 @@ module Wajub
     end
 
     def retrieve_code(code)
-      HttpUtils.pick_resource(get("/tax/codes/#{URI.encode_www_form_component(code)}"), 'tax_code', 'code')
+      HttpUtils.pick_resource(get("/tax/codes/#{HttpUtils.path_segment(code)}"), 'tax_code', 'code')
     end
 
     def list_registrations(params = nil)
@@ -276,15 +287,15 @@ module Wajub
     end
 
     def retrieve_registration(id)
-      HttpUtils.pick_resource(get("/tax/registrations/#{URI.encode_www_form_component(id)}"), 'registration', 'tax_registration')
+      HttpUtils.pick_resource(get("/tax/registrations/#{HttpUtils.path_segment(id)}"), 'registration', 'tax_registration')
     end
 
     def update_registration(id, params, options = nil)
-      HttpUtils.pick_resource(put("/tax/registrations/#{URI.encode_www_form_component(id)}", params, options), 'registration', 'tax_registration')
+      HttpUtils.pick_resource(put("/tax/registrations/#{HttpUtils.path_segment(id)}", params, options), 'registration', 'tax_registration')
     end
 
     def delete_registration(id, options = nil)
-      request('DELETE', "/tax/registrations/#{URI.encode_www_form_component(id)}", options: options)
+      request('DELETE', "/tax/registrations/#{HttpUtils.path_segment(id)}", options: options)
     end
 
     def jurisdictions(params = nil)
@@ -326,16 +337,23 @@ module Wajub
     end
 
     def remove_from_blocklist(id, options = nil)
-      request('DELETE', "/shield/blocklist/#{URI.encode_www_form_component(id)}", options: options)
+      request('DELETE', "/shield/blocklist/#{HttpUtils.path_segment(id)}", options: options)
     end
   end
 
+  # Deprecated: the API no longer offers these calls. To receive webhooks on
+  # your machine, forward them with the Wajub CLI's `wajub listen`. Each call
+  # warns when Ruby shows deprecation warnings (-W:deprecated).
   class ListenResource < BaseClient
     def config
+      warn('Wajub: listen.config is deprecated: the API no longer offers it. ' \
+           'Forward webhooks with the Wajub CLI: wajub listen', uplevel: 1, category: :deprecated)
       HttpUtils.pick_resource(get('/listen/config'), 'config', 'listen')
     end
 
     def auth(params, options = nil)
+      warn('Wajub: listen.auth is deprecated: the API no longer offers it. ' \
+           'Forward webhooks with the Wajub CLI: wajub listen', uplevel: 1, category: :deprecated)
       HttpUtils.pick_resource(post('/listen/auth', params, options), 'auth', 'listen')
     end
   end

@@ -41,6 +41,38 @@ class TestWebhooks < Minitest::Test
     end
   end
 
+  # A tolerance of 0 or less switched the timestamp check off, so a replayed
+  # delivery was accepted. Anything but a positive number keeps the 300 s window.
+  def test_construct_event_keeps_the_default_window_for_a_tolerance_that_is_not_positive
+    payload = '{"event":"payment.succeeded"}'
+    old_ts = Time.now.to_i - 600
+    [0, -1, -300, 0.0, Float::NAN, Float::INFINITY, nil, SECRET].each do |tolerance|
+      error = assert_raises(Wajub::WebhookSignatureVerificationError, "tolerance #{tolerance.inspect}") do
+        Wajub::Webhooks.new(SECRET).construct_event(payload, sign(payload, old_ts), old_ts.to_s, tolerance)
+      end
+      assert_match(/allowed 300s/, error.message)
+    end
+  end
+
+  def test_construct_event_accepts_a_recent_delivery_with_the_default_window
+    payload = '{"event":"payment.succeeded"}'
+    recent_ts = Time.now.to_i - 60
+    [0, -1, nil].each do |tolerance|
+      event = Wajub::Webhooks.new(SECRET).construct_event(payload, sign(payload, recent_ts), recent_ts.to_s, tolerance)
+      assert_equal 'payment.succeeded', event['event']
+    end
+  end
+
+  def test_construct_event_applies_a_positive_tolerance
+    payload = '{"event":"payment.succeeded"}'
+    ts = Time.now.to_i - 100
+    assert_raises(Wajub::WebhookSignatureVerificationError) do
+      Wajub::Webhooks.new(SECRET).construct_event(payload, sign(payload, ts), ts.to_s, 30)
+    end
+    event = Wajub::Webhooks.new(SECRET).construct_event(payload, sign(payload, ts), ts.to_s, 600)
+    assert_equal 'payment.succeeded', event['event']
+  end
+
   def test_construct_event_rejects_non_string_payload
     payload = { 'event' => 'payment.succeeded' }
     ts = Time.now.to_i

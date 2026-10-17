@@ -93,10 +93,10 @@ class TestResources < Minitest::Test
     mock = Wajub::MockTransport.new([{ status: 200, body: {} }])
     customers = Wajub::CustomersResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
 
-    customers.delete_tax_id('cus_1', 'txi/2', Wajub::RequestOptions.new(idempotency_key: 'del-1'))
+    customers.delete_tax_id('cus_1', 'txi?2', Wajub::RequestOptions.new(idempotency_key: 'del-1'))
 
     assert_equal 'DELETE', mock.last_request[:method]
-    assert_equal '/customers/cus_1/tax_ids/txi%2F2', mock.last_request[:path]
+    assert_equal '/customers/cus_1/tax_ids/txi%3F2', mock.last_request[:path]
     assert_equal 'del-1', mock.last_request[:headers]['Idempotency-Key']
   end
 
@@ -104,8 +104,107 @@ class TestResources < Minitest::Test
     mock = Wajub::MockTransport.new([{ status: 200, body: {} }])
     customers = Wajub::CustomersResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
 
-    customers.delete('cus/1')
+    customers.delete('cus?1')
 
-    assert_equal '/customers/cus%2F1', mock.last_request[:path]
+    assert_equal '/customers/cus%3F1', mock.last_request[:path]
+  end
+
+  def invoices_with(mock)
+    Wajub::InvoicesResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+  end
+
+  def test_invoices_send_invoice_sends_the_invoice
+    mock = Wajub::MockTransport.new([{ status: 200, body: { 'invoice' => { 'id' => 'inv_1', 'status' => 'sent' } } }])
+
+    invoice = invoices_with(mock).send_invoice('inv?1', Wajub::RequestOptions.new(idempotency_key: 'send-1'))
+
+    assert_equal 'sent', invoice['status']
+    assert_equal 'POST', mock.last_request[:method]
+    assert_equal '/invoices/inv%3F1/send', mock.last_request[:path]
+    assert_equal 'send-1', mock.last_request[:headers]['Idempotency-Key']
+  end
+
+  def test_invoices_send_with_an_id_still_sends_the_invoice
+    mock = Wajub::MockTransport.new([{ status: 200, body: { 'invoice' => { 'id' => 'inv_1', 'status' => 'sent' } } }])
+
+    invoice = invoices_with(mock).send('inv_1', Wajub::RequestOptions.new(idempotency_key: 'send-2'))
+
+    assert_equal 'sent', invoice['status']
+    assert_equal '/invoices/inv_1/send', mock.last_request[:path]
+    assert_equal 'send-2', mock.last_request[:headers]['Idempotency-Key']
+  end
+
+  # InvoicesResource#send hid Object#send: send(:retrieve, 'inv_1'), as code
+  # that calls a method by name does, sent the invoice with id "retrieve".
+  def test_invoices_send_with_a_symbol_calls_that_method
+    mock = Wajub::MockTransport.new([
+      { status: 200, body: { 'invoice' => { 'id' => 'inv_1', 'status' => 'draft' } } },
+      { status: 200, body: { 'invoice' => { 'id' => 'inv_3', 'status' => 'sent' } } }
+    ])
+    invoices = invoices_with(mock)
+
+    assert_equal 'inv_1', invoices.send(:retrieve, 'inv_1')['id']
+    assert_equal 'GET', mock.last_request[:method]
+    assert_equal '/invoices/inv_1', mock.last_request[:path]
+
+    assert_equal 'sent', invoices.send(:send_invoice, 'inv_3')['status']
+    assert_equal '/invoices/inv_3/send', mock.last_request[:path]
+
+    assert_equal 'Wajub::InvoicesResource', invoices.send(:class).name
+    assert invoices.send(:respond_to?, :send_invoice)
+  end
+
+  # A String is always an invoice id, even one that names a method: an id from
+  # a request, such as invoices.send(params[:id]), never calls a method.
+  def test_invoices_send_with_a_string_always_sends_that_invoice
+    names = %w[exit api_key freeze inspect list retrieve]
+    mock = Wajub::MockTransport.new(names.map { |name| { status: 200, body: { 'invoice' => { 'id' => name, 'status' => 'sent' } } } })
+    invoices = invoices_with(mock)
+
+    names.each do |name|
+      begin
+        invoice = invoices.send(name)
+      rescue SystemExit
+        flunk "send(#{name.inspect}) called Kernel#exit"
+      end
+
+      assert_kind_of Hash, invoice, "send(#{name.inspect}) returned #{invoice.inspect}"
+      assert_equal 'sent', invoice['status']
+      assert_equal 'POST', mock.last_request[:method]
+      assert_equal "/invoices/#{name}/send", mock.last_request[:path]
+    end
+    refute_predicate invoices, :frozen?
+  end
+
+  # The API no longer offers /listen/config and /listen/auth: both methods are
+  # deprecated in favour of the Wajub CLI's `wajub listen`, and still send the
+  # same request.
+  def test_listen_methods_are_deprecated
+    mock = Wajub::MockTransport.new([
+      { status: 200, body: { 'config' => { 'host' => 'example' } } },
+      { status: 200, body: { 'auth' => { 'token' => 'tok' } } }
+    ])
+    listen = Wajub::ListenResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+    shown = Warning[:deprecated]
+    Warning[:deprecated] = true
+
+    assert_output(nil, /listen\.config is deprecated.*wajub listen/) { listen.config }
+    assert_equal '/listen/config', mock.last_request[:path]
+
+    assert_output(nil, /listen\.auth is deprecated.*wajub listen/) { listen.auth('channel' => 'x') }
+    assert_equal '/listen/auth', mock.last_request[:path]
+  ensure
+    Warning[:deprecated] = shown
+  end
+
+  def test_listen_methods_stay_quiet_when_deprecation_warnings_are_off
+    mock = Wajub::MockTransport.new([{ status: 200, body: {} }])
+    listen = Wajub::ListenResource.new(API_KEY, Wajub::API_URL, 'wajub', transport: mock)
+    shown = Warning[:deprecated]
+    Warning[:deprecated] = false
+
+    assert_output(nil, '') { listen.config }
+  ensure
+    Warning[:deprecated] = shown
   end
 end
