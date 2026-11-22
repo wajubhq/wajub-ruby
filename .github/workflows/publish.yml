@@ -1,0 +1,33 @@
+# Publishes the wajub gem to RubyGems when a tag vX.Y.Z is pushed, through
+# RubyGems trusted publishing (GitHub's OIDC token): no API key is stored.
+# One-time setup on rubygems.org → wajub → Trusted publishers → GitHub Actions:
+# repository wajubhq/wajub-ruby, workflow publish.yml, environment rubygems.
+name: Publish to RubyGems
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: rubygems
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ruby
+          bundler-cache: true
+      - name: Tag matches Wajub::VERSION
+        run: |
+          version=$(ruby -Ilib -e 'require "wajub/version"; print Wajub::VERSION')
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "lib/wajub/version.rb says $version, tag is $GITHUB_REF_NAME"; exit 1; }
+      # The same checks as CI before anything is released.
+      - run: bundle exec rake test
+      # Builds and pushes the gem; the tag already exists, so nothing is pushed to git.
+      - uses: rubygems/release-gem@v1
